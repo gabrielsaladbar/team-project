@@ -49,7 +49,16 @@ public class HandManager {
                     return;
                 }
                 BotDecision decision = botStrategy.decide(game, current);
-                takeTurn(game, decision.getType(), decision.getAmount());
+                ActionType type = decision.getType();
+                if (getIllegalMoveMessage(game, current, type, decision.getAmount()) != null) {
+                    // A strategy should never do this, but if one does, play safe instead.
+                    if (game.getAmountToCall(current) == 0) {
+                        type = ActionType.CHECK;
+                    } else {
+                        type = ActionType.FOLD;
+                    }
+                }
+                takeTurn(game, type, decision.getAmount());
             }
         }
     }
@@ -91,6 +100,34 @@ public class HandManager {
         }
 
         game.setCurrentPlayerIndex(nextPlayerAbleToAct(game, game.getCurrentPlayerIndex()));
+    }
+
+    /**
+     * Checks whether a move is allowed for the player right now.
+     *
+     * @param game the game being played
+     * @param player the player making the move
+     * @param type the move
+     * @param raiseTo for a raise, the total bet to raise to; ignored otherwise
+     * @return a message explaining why the move is not allowed, or null if it is legal
+     */
+    public String getIllegalMoveMessage(Game game, Player player, ActionType type, int raiseTo) {
+        int toCall = game.getAmountToCall(player);
+        if (type == ActionType.CHECK && toCall > 0) {
+            return "You cannot check when there is a bet of " + toCall + " to call.";
+        }
+        if (type == ActionType.CALL && toCall == 0) {
+            return "There is no bet to call. You can check instead.";
+        }
+        if (type == ActionType.RAISE) {
+            if (raiseTo < game.getMinimumRaiseTo()) {
+                return "The minimum raise is to " + game.getMinimumRaiseTo() + ".";
+            }
+            if (raiseTo - player.getCurrentBet() > player.getChips()) {
+                return "You do not have enough chips to raise to " + raiseTo + ".";
+            }
+        }
+        return null;
     }
 
     /**
