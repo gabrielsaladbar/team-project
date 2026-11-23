@@ -1,7 +1,9 @@
 package use_case.view_stats;
 
 import java.awt.BorderLayout;
-import java.util.List;
+import data_access.FileGameHistoryGateway;
+import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,17 +21,25 @@ public class ViewStatsSwingDemo {
         JLabel resultLabel = new JLabel("Click My Statistics to see your results.");
         JButton statsButton = new JButton("My Statistics");
 
-        GameHistoryGateway sampleHistory = (playerId, limit) -> List.of(
-                GameHistoryGateway.Outcome.WIN,
-                GameHistoryGateway.Outcome.LOSS,
-                GameHistoryGateway.Outcome.TIE
-        );
+        Path file = Path.of(System.getProperty("user.home"),
+                "poker-stats-demo", "game-history.csv");
+        GameHistoryGateway history = new FileGameHistoryGateway(file);
 
-        ViewStatsPresenter presenter = new ViewStatsPresenter(resultLabel::setText);
-        ViewStatsInteractor interactor = new ViewStatsInteractor(sampleHistory, presenter);
+        ViewStatsPresenter presenter = new ViewStatsPresenter(message ->
+                SwingUtilities.invokeLater(() -> resultLabel.setText(message)));
+        ViewStatsInteractor interactor = new ViewStatsInteractor(history, presenter);
         ViewStatsController controller = new ViewStatsController(interactor);
 
-        statsButton.addActionListener(event -> controller.viewStats("player-1"));
+        statsButton.addActionListener(event -> {
+            statsButton.setEnabled(false);
+            CompletableFuture.runAsync(() -> controller.viewStats("player-1"))
+                    .whenCompleteAsync((unused, error) -> {
+                        statsButton.setEnabled(true);
+                        if (error != null) {
+                            presenter.presentHistoryUnavailable();
+                        }
+                    }, SwingUtilities::invokeLater);
+        });
 
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.add(statsButton, BorderLayout.NORTH);
