@@ -16,6 +16,12 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.Objects;
 
 public class FileGameHistoryGateway implements GameHistoryGateway {
     private static final String HEADER = "playerId,gameId,finishedAtMillis,outcome";
@@ -64,6 +70,75 @@ public class FileGameHistoryGateway implements GameHistoryGateway {
             outcomes.add(games.get(i).outcome);
         }
         return outcomes;
+    }
+
+    public void saveResult(String playerId, String gameId, long finishedAtMillis,
+                           Outcome outcome) throws IOException {
+        checkId(playerId);
+        checkId(gameId);
+        Objects.requireNonNull(outcome, "outcome");
+
+        Path file = historyFile.toAbsolutePath();
+        Files.createDirectories(file.getParent());
+        Path lockFile = file.resolveSibling(file.getFileName() + ".lock");
+
+        try (FileChannel channel = FileChannel.open(lockFile,
+                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+             FileLock lock = channel.tryLock()) {
+            if (lock == null) {
+                throw new IOException("Game history is busy. Try saving again.");
+            }
+            writeResult(file, playerId, gameId, finishedAtMillis, outcome);
+        } catch (OverlappingFileLockException e) {
+            throw new IOException("Game history is busy. Try saving again.", e);
+        }
+    }
+
+    private static void writeResult(Path file, String playerId, String gameId,
+                                    long finishedAtMillis, Outcome outcome) throws IOException {
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(file);
+        } catch (NoSuchFileException e) {
+            lines = new ArrayList<>();
+            lines.add(HEADER);
+        }
+
+        if (lines.isEmpty() || !HEADER.equals(lines.get(0))) {
+            throw new IOException("Game history has an invalid header.");
+        }
+
+        for (int i = 1; i < lines.size(); i++) {
+            String[] fields = lines.get(i).split(",", -1);
+            if (fields.length != 4) {
+                throw new IOException("Invalid game history row " + (i + 1));
+            }
+            if (fields[0].equals(playerId) && fields[1].equals(gameId)) {
+                if (!fields[3].equals(outcome.name())) {
+                    throw new IOException("A different outcome is already saved for this game.");
+                }
+                return;
+            }
+        }
+
+        lines.add(String.join(",", playerId, gameId, Long.toString(finishedAtMillis),
+                outcome.name()));
+
+        Path temp = Files.createTempFile(file.getParent(), "game-history-", ".tmp");
+        try {
+            Files.write(temp, lines);
+            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temp);
+        }
+    }
+
+    private static void checkId(String id) {
+        if (id == null || id.isBlank() || id.contains(",") || id.contains("\"")
+                || id.contains("\n") || id.contains("\r")) {
+            throw new IllegalArgumentException("Use a nonempty ID without CSV separators or quotes.");
+        }
     }
 
     private static class GameResult {
