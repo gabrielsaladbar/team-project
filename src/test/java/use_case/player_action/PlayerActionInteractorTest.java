@@ -6,6 +6,7 @@ import entity.BotStrategy;
 import entity.Game;
 import entity.Player;
 import entity.SimpleBotStrategy;
+import entity.Stage;
 import org.junit.jupiter.api.Test;
 import use_case.CallingBotStrategy;
 import use_case.FoldingBotStrategy;
@@ -198,6 +199,7 @@ class PlayerActionInteractorTest {
                 act(interactor, move, 0);
             }
             assertEquals(5 * 300, totalChips(game));
+            assertEquals(Stage.HAND_OVER, game.getStage());
         }
     }
 }

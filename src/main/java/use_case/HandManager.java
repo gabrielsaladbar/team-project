@@ -5,6 +5,8 @@ import entity.BotDecision;
 import entity.BotStrategy;
 import entity.Card;
 import entity.Game;
+import entity.HandEvaluator;
+import entity.HandValue;
 import entity.Player;
 import entity.Stage;
 
@@ -13,12 +15,13 @@ import java.util.List;
 
 /**
  * Runs a hand once it has been dealt: applies moves, lets the bots take their turns,
- * and moves the hand from one stage to the next. Shared by the start hand and
- * player action interactors so this logic is only written once.
+ * moves the hand from one stage to the next, and pays out the pot at the end.
+ * Shared by the start hand and player action interactors so this logic is only written once.
  */
 public class HandManager {
 
     private final BotStrategy botStrategy;
+    private final HandEvaluator handEvaluator;
 
     /**
      * Creates a hand manager.
@@ -27,6 +30,7 @@ public class HandManager {
      */
     public HandManager(BotStrategy botStrategy) {
         this.botStrategy = botStrategy;
+        this.handEvaluator = new HandEvaluator();
     }
 
     /**
@@ -249,6 +253,7 @@ public class HandManager {
             game.setStage(Stage.RIVER);
         } else {
             game.setStage(Stage.SHOWDOWN);
+            payOutShowdown(game);
             return;
         }
         startBettingRound(game, game.getDealerIndex());
@@ -289,6 +294,51 @@ public class HandManager {
         winners.add(winner);
         game.setHandResult(winners, null, amount);
         game.addToLog(winner.getName() + " wins " + amount);
+        game.clearPot();
+        game.setStage(Stage.HAND_OVER);
+    }
+
+    /**
+     * Compares the hands of everyone who did not fold and splits the pot evenly
+     * between the best ones. A chip left over from an uneven split goes to the
+     * first winner after the dealer.
+     */
+    private void payOutShowdown(Game game) {
+        List<Player> players = game.getPlayers();
+        List<Player> winners = new ArrayList<>();
+        HandValue bestValue = null;
+
+        // Go around the table starting after the dealer, so winners are listed in that order.
+        for (int step = 1; step <= players.size(); step++) {
+            Player player = players.get((game.getDealerIndex() + step) % players.size());
+            if (!player.isFolded()) {
+                List<Card> cards = player.getHoleCards();
+                cards.addAll(game.getCommunityCards());
+                HandValue value = handEvaluator.evaluate(cards);
+                if (bestValue == null || value.compareTo(bestValue) > 0) {
+                    bestValue = value;
+                    winners.clear();
+                    winners.add(player);
+                } else if (value.compareTo(bestValue) == 0) {
+                    winners.add(player);
+                }
+            }
+        }
+
+        int share = game.getPot() / winners.size();
+        int leftover = game.getPot() % winners.size();
+        for (Player winner : winners) {
+            winner.winChips(share);
+        }
+        winners.get(0).winChips(leftover);
+
+        game.setHandResult(winners, bestValue.getCategory(), share);
+        String handName = bestValue.getCategory().toString().toLowerCase().replace('_', ' ');
+        if (winners.size() == 1) {
+            game.addToLog(winners.get(0).getName() + " wins " + share + " with " + handName);
+        } else {
+            game.addToLog(winners.size() + " players split the pot with " + handName);
+        }
         game.clearPot();
         game.setStage(Stage.HAND_OVER);
     }
