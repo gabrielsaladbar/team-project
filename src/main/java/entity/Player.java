@@ -11,6 +11,7 @@ public class Player {
 
     private final String name;
     private final boolean isBot;
+    private final BotPersonality personality;
     private final List<Card> holeCards;
     private int chips;
     private int currentBet;
@@ -24,9 +25,25 @@ public class Player {
      * @param isBot true if this player is controlled by the computer
      */
     public Player(String name, int chips, boolean isBot) {
+        this(name, chips, isBot, null);
+    }
+
+    /**
+     * Creates a bot player with the given personality, no cards and no bet.
+     *
+     * @param name the name shown for this bot
+     * @param chips the number of chips the bot starts with
+     * @param personality how cautious or aggressive the bot plays
+     */
+    public Player(String name, int chips, BotPersonality personality) {
+        this(name, chips, true, personality);
+    }
+
+    private Player(String name, int chips, boolean isBot, BotPersonality personality) {
         this.name = name;
         this.chips = chips;
         this.isBot = isBot;
+        this.personality = personality;
         this.holeCards = new ArrayList<>();
         this.currentBet = 0;
         this.folded = false;
@@ -50,6 +67,24 @@ public class Player {
 
     public boolean isBot() {
         return isBot;
+    }
+
+    /**
+     * Returns this bot's personality, or null for the human player.
+     *
+     * @return the personality, or null
+     */
+    public BotPersonality getPersonality() {
+        return personality;
+    }
+
+    /**
+     * Returns true if the player is still in the hand but has no chips left to bet.
+     *
+     * @return whether the player is all in
+     */
+    public boolean isAllIn() {
+        return chips == 0 && !folded;
     }
 
     /**
@@ -92,10 +127,31 @@ public class Player {
     }
 
     /**
+     * Adds chips to this player's stack, for example when they win a pot.
+     *
+     * @param amount the number of chips won
+     * @throws IllegalArgumentException if amount is negative
+     */
+    public void winChips(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Cannot win a negative amount.");
+        }
+        chips = chips + amount;
+    }
+
+    /**
      * Marks this player as folded for the rest of the hand.
      */
     public void fold() {
         folded = true;
+    }
+
+    /**
+     * Sets the bet back to 0 at the start of a new betting round. The chips
+     * already bet are expected to have been moved into the pot.
+     */
+    public void resetBetForNewRound() {
+        currentBet = 0;
     }
 
     /**
