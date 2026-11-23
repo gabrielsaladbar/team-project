@@ -11,19 +11,20 @@ public class ViewStatsPresenter implements ViewStatsOutputBoundary {
     }
 
     @Override
-    public void presentStats(int wins, int gamesPlayed) {
-        if (gamesPlayed == 0) {
+    public void presentStats(int allWins, int allGames, int recentWins, int recentGames) {
+        if (allGames == 0) {
             displayMessage.accept("Play a game to see your statistics.");
             return;
         }
 
-        long winPercentage = Math.round(100.0 * wins / gamesPlayed);
-        String gameWord = gamesPlayed == 1 ? "game" : "games";
+        long allPercent = Math.round(100.0 * allWins / allGames);
+        long recentPercent = Math.round(100.0 * recentWins / recentGames);
 
         displayMessage.accept(String.format(
-                "You won %d of your last %d %s (%d%%).",
-                wins, gamesPlayed, gameWord, winPercentage
-        ));
+                "All time %d/%d (%d%%) | Last %d %s %d/%d (%d%%)",
+                allWins, allGames, allPercent,
+                recentGames, recentGames == 1 ? "game" : "games",
+                recentWins, recentGames, recentPercent));
     }
 
     @Override

@@ -1,30 +1,23 @@
 package use_case.view_stats;
 
 import java.util.List;
+import main.interface_adapters.view_stats.ViewStatsPresenter;
+
+import static use_case.view_stats.GameHistoryGateway.Outcome.LOSS;
+import static use_case.view_stats.GameHistoryGateway.Outcome.TIE;
+import static use_case.view_stats.GameHistoryGateway.Outcome.WIN;
 
 public class ViewStatsDemo {
     public static void main(String[] args) {
-        GameHistoryGateway sampleHistory = (playerId, limit) -> List.of(
-                GameHistoryGateway.Outcome.WIN,
-                GameHistoryGateway.Outcome.LOSS,
-                GameHistoryGateway.Outcome.TIE
-        );
+        // Newest first. The two oldest games are both wins.
+        List<GameHistoryGateway.Outcome> games = List.of(
+                WIN, LOSS, TIE, WIN, LOSS, LOSS, WIN, LOSS, LOSS, LOSS,
+                WIN, WIN);
 
-        ViewStatsOutputBoundary consolePresenter = new ViewStatsOutputBoundary() {
-            @Override
-            public void presentStats(int wins, int gamesPlayed) {
-                System.out.println("Wins: " + wins);
-                System.out.println("Games played: " + gamesPlayed);
-            }
+        GameHistoryGateway history = (playerId, limit) ->
+                games.subList(0, Math.min(limit, games.size()));
 
-            @Override
-            public void presentHistoryUnavailable() {
-                System.out.println("Could not load game history.");
-            }
-        };
-
-        ViewStatsInteractor interactor =
-                new ViewStatsInteractor(sampleHistory, consolePresenter);
-        interactor.execute("player-1");
+        ViewStatsPresenter presenter = new ViewStatsPresenter(System.out::println);
+        new ViewStatsInteractor(history, presenter).execute("player-1");
     }
 }
