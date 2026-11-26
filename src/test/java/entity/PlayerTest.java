@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -97,5 +98,41 @@ class PlayerTest {
         assertEquals(0, player.getCurrentBet());
         assertFalse(player.isFolded());
         assertTrue(player.getHoleCards().isEmpty());
+    }
+
+    @Test
+    void botKeepsItsPersonalityAndHumanHasNone() {
+        Player bot = new Player("Bot 1", 100, BotPersonality.AGGRESSIVE);
+        assertTrue(bot.isBot());
+        assertEquals(BotPersonality.AGGRESSIVE, bot.getPersonality());
+        assertNull(new Player("Alice", 100, false).getPersonality());
+    }
+
+    @Test
+    void allInWhenNoChipsLeftAndNotFolded() {
+        Player player = new Player("Alice", 100, false);
+        assertFalse(player.isAllIn());
+        player.bet(100);
+        assertTrue(player.isAllIn());
+        player.fold();
+        assertFalse(player.isAllIn());
+    }
+
+    @Test
+    void resetBetForNewRoundKeepsCardsAndChips() {
+        Player player = new Player("Alice", 100, false);
+        player.receiveCards(new Card(Rank.TWO, Suit.CLUBS), new Card(Rank.THREE, Suit.CLUBS));
+        player.bet(30);
+        player.resetBetForNewRound();
+        assertEquals(0, player.getCurrentBet());
+        assertEquals(70, player.getChips());
+        assertEquals(2, player.getHoleCards().size());
+    }
+
+    @Test
+    void winChipsAddsToStack() {
+        Player player = new Player("Alice", 100, false);
+        player.winChips(50);
+        assertEquals(150, player.getChips());
     }
 }
