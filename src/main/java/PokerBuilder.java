@@ -2,6 +2,10 @@
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+import java.util.Random;
+
+import data_access.InMemoryGameDataAccessObject;
+import entity.SimpleBotStrategy;
 
 import main.interface_adapters.game.GameController;
 import main.interface_adapters.game.GamePresenter;
@@ -16,6 +20,8 @@ import main.interface_adapters.settings.SettingsPresenter;
 import main.interface_adapters.settings.SettingsViewModel;
 import main.view.*;
 import main.view.ViewManager;
+import use_case.player_action.PlayerActionInteractor;
+import use_case.start_hand.StartHandInteractor;
 
 
 public class PokerBuilder {
@@ -72,8 +78,14 @@ public class PokerBuilder {
         this.gameView = new GameView(gameViewModel);
 
         GamePresenter gamePresenter = new GamePresenter(gameViewModel, settingsViewModel, viewManagerModel);
-        // The interactors are connected to the presenter in a later commit.
-        GameController gameController = new GameController(null, null, gameViewModel);
+        InMemoryGameDataAccessObject gameDataAccess = new InMemoryGameDataAccessObject();
+        SimpleBotStrategy botStrategy = new SimpleBotStrategy(new Random());
+        StartHandInteractor startHandInteractor = new StartHandInteractor(gameDataAccess,
+                gamePresenter, botStrategy, new Random());
+        PlayerActionInteractor playerActionInteractor = new PlayerActionInteractor(gameDataAccess,
+                gamePresenter, botStrategy);
+        GameController gameController = new GameController(startHandInteractor,
+                playerActionInteractor, gameViewModel);
         gameView.setController(gameController);
         gameView.playerChoice.setController(gameController);
         cardPanel.add(gameView, GameViewModel.VIEW_NAME);
