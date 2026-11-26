@@ -16,6 +16,8 @@ public class GameViewModel {
 
     private String turnState = "none"; // "none", "unopened", or "facingBet"
     private int currentBetToMatch = 0;
+    private int playerCurrentBet = 0;
+    private String message = "";
 
     // Human player's hole cards
     private String playerCard1 = "/cards/null_card.png";
@@ -244,6 +246,14 @@ public class GameViewModel {
         this.currentBetToMatch = bet;
     }
 
+    public int getPlayerCurrentBet() {
+        return playerCurrentBet;
+    }
+
+    public void setPlayerCurrentBet(int bet) {
+        this.playerCurrentBet = bet;
+    }
+
     public void deductPlayerChips(Map<Integer, Integer> betChips, int totalAmount) {
         for (Map.Entry<Integer, Integer> entry : betChips.entrySet()) {
             int denom = entry.getKey();
@@ -253,6 +263,21 @@ public class GameViewModel {
         }
         chipsHeld = Math.max(0, chipsHeld - totalAmount);
         support.firePropertyChange("chipsUpdated", null, null);
+    }
+
+    public void setPlayerChips(int newChipsHeld, Map<Integer, Integer> chipCounts) {
+        chipsHeld = newChipsHeld;
+        chips.clear();
+        chips.putAll(chipCounts);
+        support.firePropertyChange("chipsUpdated", null, null);
+    }
+
+    public void setOpponentChips(int opponentIndex, int amount) {
+        Map<String, String> oppInfo = players.get("player" + opponentIndex);
+        if (oppInfo != null) {
+            oppInfo.put("Chips", Integer.toString(amount));
+            support.firePropertyChange("opponentChipsUpdated", null, opponentIndex);
+        }
     }
 
     public void deductOpponentChips(int opponentIndex, int amount) {
@@ -295,6 +320,16 @@ public class GameViewModel {
 
     public String getTurnState() {
         return turnState;
+    }
+
+    // --- Message shown above the table (errors and hand results) ---
+    public void setMessage(String newMessage) {
+        this.message = newMessage;
+        support.firePropertyChange("messageChanged", null, newMessage);
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public void playerActionSubmitted() {

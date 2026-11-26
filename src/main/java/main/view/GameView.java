@@ -29,6 +29,7 @@ public class GameView extends JPanel implements PropertyChangeListener {
 
     private final JLabel nameLabel;
     private final JLabel chipsHeldLabel;
+    private final JLabel messageLabel;
     private JLabel role;
 
     private final CardLabel card1;
@@ -52,6 +53,11 @@ public class GameView extends JPanel implements PropertyChangeListener {
         ViewUtils.setFont(chipsHeldLabel, "Figtree SemiBold", Font.PLAIN, 16, 0.05);
         ViewUtils.setRelativeBounds(chipsHeldLabel, 0.01, 0.86, 0.28, 0.06);
 
+        messageLabel = new JLabel("", SwingConstants.CENTER);
+        messageLabel.setForeground(new Color(241, 251, 255));
+        ViewUtils.setFont(messageLabel, "Figtree SemiBold", Font.PLAIN, 16, 0.02);
+        ViewUtils.setRelativeBounds(messageLabel, 0.1, 0.02, 0.8, 0.06);
+
         card1 = new CardLabel("/cards/null_card.png", "", 0.205, 0.9, 0.055);
         card2 = new CardLabel("/cards/null_card.png", "", 0.248, 0.9, 0.055);
 
@@ -67,6 +73,7 @@ public class GameView extends JPanel implements PropertyChangeListener {
         this.add(playerChoice);
         this.add(nameLabel);
         this.add(chipsHeldLabel);
+        this.add(messageLabel);
         this.add(pokerTable);
     }
 
@@ -187,6 +194,8 @@ public class GameView extends JPanel implements PropertyChangeListener {
         } else if ("chipsUpdated".equals(eventName)) {
             updatePlayerChips();
             chipsHeldLabel.setText("$" + gameViewModel.getChipsHeld());
+        } else if ("messageChanged".equals(eventName)) {
+            messageLabel.setText(gameViewModel.getMessage());
         } else if ("opponentChipsUpdated".equals(eventName)) {
             int oppIdx = (int) evt.getNewValue();
             if (oppIdx >= 0 && oppIdx < infoPanels.size()) {

@@ -5,6 +5,8 @@ import main.view.ViewUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ public class PlayerChoicePanel extends JPanel {
     private final JButton raiseButton;
     private final JButton reraiseButton;
     private final JButton foldButton;
+    private final JButton nextHandButton;
 
     // Chip selector UI components
     private static final int[] DENOMINATIONS = {1, 5, 25, 50, 100};
@@ -57,6 +60,7 @@ public class PlayerChoicePanel extends JPanel {
         raiseButton = createActionButton("Raise", new Color(76, 175, 80), 0.24);
         reraiseButton = createActionButton("Re-raise", new Color(76, 175, 80), 0.24);
         foldButton = createActionButton("Fold", new Color(211, 47, 47), 0.46);
+        nextHandButton = createActionButton("Next Hand", new Color(76, 175, 80), 0.24);
 
         // Build 5 chip columns (White, Red, Green, Blue, Black)
         for (int i = 0; i < 5; i++) {
@@ -152,12 +156,21 @@ public class PlayerChoicePanel extends JPanel {
         foldButton.addActionListener(e -> {
             if (gameController != null) gameController.playerFold();
         });
+        nextHandButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameController != null) {
+                    gameController.nextHand();
+                }
+            }
+        });
 
         this.add(checkButton);
         this.add(callButton);
         this.add(raiseButton);
         this.add(reraiseButton);
         this.add(foldButton);
+        this.add(nextHandButton);
         this.add(totalBetLabel);
         this.add(confirmRaiseButton);
         this.add(cancelRaiseButton);
@@ -251,6 +264,7 @@ public class PlayerChoicePanel extends JPanel {
 
     public void setTurnState(String state) {
         hideChipSelector();
+        nextHandButton.setVisible(false);
 
         if ("unopened".equals(state)) {
             checkButton.setVisible(true);
@@ -265,6 +279,14 @@ public class PlayerChoicePanel extends JPanel {
             callButton.setVisible(true);
             reraiseButton.setVisible(true);
             foldButton.setVisible(true);
+            this.setVisible(true);
+        } else if ("handOver".equals(state)) {
+            checkButton.setVisible(false);
+            raiseButton.setVisible(false);
+            callButton.setVisible(false);
+            reraiseButton.setVisible(false);
+            foldButton.setVisible(false);
+            nextHandButton.setVisible(true);
             this.setVisible(true);
         } else {
             this.setVisible(false);
