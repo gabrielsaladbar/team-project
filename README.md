@@ -70,3 +70,22 @@ _Database:_
 _API:_
     -Texas Probability Calculater
     -Robot characteristic (AI) - robot chat on different circumstance
+
+## Game Logic (Lead: Simon)
+
+**User story:** As a player, I want to play a hand of Texas Hold'em against bots so that I can practise poker without needing other people.
+
+**Use case: Start Hand** (`use_case.start_hand`)
+1. The player starts a game from the lobby (or clicks Next Hand after a hand ends).
+2. The interactor creates the game with the player and 1 to 5 bots, or moves the dealer on and removes anyone with no chips.
+3. A new deck is shuffled, the blinds are posted and everyone gets two cards.
+4. The bots act until it is the player's turn, and the presenter shows the table.
+
+**Use case: Player Action** (`use_case.player_action`)
+1. The player clicks Check, Call, Raise or Fold.
+2. The interactor checks the move is allowed; if not, the player sees why and can try again.
+3. The move is applied and the bots take their turns.
+4. When a betting round ends, the flop, turn or river is dealt.
+5. When only one player is left, or after the river, the pot is paid to the winner(s) and the result is shown.
+
+**Entities:** Card, Suit, Rank, Deck, Player, Game, Stage, HandEvaluator, HandValue, HandCategory, ActionType, BotStrategy, SimpleBotStrategy, BotPersonality, BotDecision.
