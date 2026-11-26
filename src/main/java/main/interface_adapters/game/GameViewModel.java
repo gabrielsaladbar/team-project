@@ -16,6 +16,7 @@ public class GameViewModel {
 
     private String turnState = "none"; // "none", "unopened", or "facingBet"
     private int currentBetToMatch = 0;
+    private int playerCurrentBet = 0;
 
     // Human player's hole cards
     private String playerCard1 = "/cards/null_card.png";
@@ -242,6 +243,14 @@ public class GameViewModel {
 
     public void setCurrentBetToMatch(int bet) {
         this.currentBetToMatch = bet;
+    }
+
+    public int getPlayerCurrentBet() {
+        return playerCurrentBet;
+    }
+
+    public void setPlayerCurrentBet(int bet) {
+        this.playerCurrentBet = bet;
     }
 
     public void deductPlayerChips(Map<Integer, Integer> betChips, int totalAmount) {

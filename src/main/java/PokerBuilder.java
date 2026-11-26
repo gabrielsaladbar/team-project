@@ -72,7 +72,8 @@ public class PokerBuilder {
         this.gameView = new GameView(gameViewModel);
 
         GamePresenter gamePresenter = new GamePresenter(gameViewModel, settingsViewModel, viewManagerModel);
-        GameController gameController = new GameController(gamePresenter);
+        // The interactors are connected to the presenter in a later commit.
+        GameController gameController = new GameController(null, null, gameViewModel);
         gameView.setController(gameController);
         gameView.playerChoice.setController(gameController);
         cardPanel.add(gameView, GameViewModel.VIEW_NAME);
