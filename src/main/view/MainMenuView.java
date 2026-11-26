@@ -1,40 +1,86 @@
 package main.view;
 
-import main.interface_adapters.MainMenuViewModel;
+import main.interface_adapters.main_menu.MainMenuController;
+import main.interface_adapters.main_menu.MainMenuViewModel;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.text.View;
+import java.awt.*;
+import java.awt.event.*;
 
-public class MainMenuView extends JPanel {
+public class MainMenuView extends JPanel implements ActionListener {
 
     private final String viewName = "Main Menu";
     private final MainMenuViewModel viewModel;
-    public final JButton play;
+    private MainMenuController mainMenuController = null;
+
+    public final JLabel titleLabel;
+    public final JButton playButton;
+    public final JButton settingsButton;
+    public final JButton exitButton;
+
 
     public MainMenuView(MainMenuViewModel mainMenuViewModel) {
         this.viewModel = mainMenuViewModel;
+        this.setLayout(null);
 
-        final JLabel title = new JLabel(viewModel.TITLE_LABEL);
-        title.setAlignmentX(CENTER_ALIGNMENT);
+        //Game title setup
+        titleLabel = new JLabel(MainMenuViewModel.TITLE_LABEL, SwingConstants.CENTER);
+        titleLabel.setForeground(Color.white);
+        ViewUtils.setFont(titleLabel, "Figtree SemiBold", Font.BOLD, 28, 0.06);
+        ViewUtils.setRelativeBounds(titleLabel, 0.0, 0.3, 1.0, 0.15);
 
-        final JPanel button = new JPanel();
-        this.play = new JButton(viewModel.PLAY_LABEL);
-        button.add(this.play);
+        //Play Button set up
+        playButton = new JButton(MainMenuViewModel.PLAY_LABEL);
+        ViewUtils.setFont(playButton, "Figtree Black", Font.BOLD, 28, 0.04);
+        ViewUtils.setRelativeBounds(playButton, 0.255, 0.5, 0.15, 0.1);
+        playButton.setBackground(new Color(9, 150, 14));
+        playButton.setForeground(Color.white);
+        playButton.setFocusPainted(false);
+        playButton.addActionListener(this);
+        playButton.setBorder(BorderFactory.createLineBorder(Color.white, 2));
 
-        this.play.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent evt) {
-                        if (evt.getSource().equals(play)) {
-                            System.out.println("User pressed Play");
-                        }
-                    }
-                }
-        );
+        settingsButton = new JButton(MainMenuViewModel.SETTINGS_LABEL);
+        ViewUtils.setFont(settingsButton, "Figtree Black", Font.BOLD, 28, 0.04);
+        ViewUtils.setRelativeBounds(settingsButton, 0.425, 0.5, 0.15, 0.1);
+        settingsButton.setBackground(new Color(73, 109, 140));
+        settingsButton.setForeground(Color.white);
+        settingsButton.setFocusPainted(false);
+        settingsButton.addActionListener(this);
+        settingsButton.setBorder(BorderFactory.createLineBorder(Color.white, 2));
 
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        this.add(title);
-        this.add(button);
+        exitButton = new JButton(MainMenuViewModel.EXIT_LABEL);
+        ViewUtils.setRelativeBounds(exitButton, 0.595, 0.5, 0.15, 0.1);
+        ViewUtils.setFont(exitButton, "Figtree Black", Font.BOLD, 28, 0.04);
+        exitButton.setBackground(new Color(196, 43, 64));
+        exitButton.setForeground(Color.white);
+        exitButton.setFocusPainted(false);
+        exitButton.addActionListener(this);
+        exitButton.setBorder(BorderFactory.createLineBorder(Color.white, 2));
 
+        //colors
+        this.setBackground(new Color(5,5,5));
+
+        this.add(playButton);
+        this.add(titleLabel);
+        this.add(settingsButton);
+        this.add(exitButton);
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent event) {
+        if (event.getSource().equals(playButton)) {
+            mainMenuController.switchToLobbyView();
+        }
+        if (event.getSource().equals(settingsButton)) {
+            mainMenuController.switchToSettingsView();
+        }
+        if (event.getSource().equals(exitButton)) {
+            mainMenuController.exitApplication();
+        }
+    }
+
+    public void setController(MainMenuController mainMenuController) {
+        this.mainMenuController = mainMenuController;
     }
 }
